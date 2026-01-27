@@ -1,0 +1,25 @@
+# Автогенерируемые папки
+__pycache__/
+venv/
+*.pyc
+
+# Чекпоинты
+checkpoints/
+training_logs/
+experiment_logs/
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+*.code-workspace
+
+data/
+*.tar.gz
+*.zip
+*.h5
+*.hdf5
+*.npy
+*.npz

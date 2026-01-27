@@ -1,0 +1,47 @@
+{
+  "device": "cpu",
+  "dataset_type": "artifacts",
+  "imbalance_factor": 0.5,
+  "noise_level": 0.3,
+  "artifact_level": 0.3,
+  "models": [
+    "resnet18"
+  ],
+  "strategies": [
+    "baseline",
+    "stagewise",
+    "static",
+    "online"
+  ],
+  "total_epochs": 10,
+  "batch_size": 128,
+  "learning_rate": 0.0001,
+  "start_time": "2026-01-27T13:00:29.469024",
+  "end_time": "2026-01-27T14:28:04.835446",
+  "best_results": {
+    "resnet18_baseline": {
+      "epoch": 9,
+      "accuracy": 0.968,
+      "loss": 0.0967823949599266,
+      "timestamp": "2026-01-27T13:35:50.467891"
+    },
+    "resnet18_stagewise": {
+      "epoch": 9,
+      "accuracy": 0.9327,
+      "loss": 0.19797708716392518,
+      "timestamp": "2026-01-27T13:59:56.988054"
+    },
+    "resnet18_static": {
+      "epoch": 9,
+      "accuracy": 0.9430611387772244,
+      "loss": 0.19185155349021812,
+      "timestamp": "2026-01-27T14:16:31.933281"
+    },
+    "resnet18_online": {
+      "epoch": 9,
+      "accuracy": 0.9772666666666666,
+      "loss": 0.0814089378674825,
+      "timestamp": "2026-01-27T14:28:04.662727"
+    }
+  }
+}
