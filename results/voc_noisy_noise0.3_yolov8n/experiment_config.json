@@ -1,0 +1,19 @@
+{
+  "dataset_type": "noisy",
+  "strategies": "baseline,stagewise,static,online",
+  "model": "yolov8n",
+  "data": "VOC.yaml",
+  "total_steps": 3000,
+  "budget_mode": "steps",
+  "max_epochs": 100,
+  "batch": 8,
+  "imgsz": 640,
+  "workers": 4,
+  "device": "mps",
+  "noise_level": 0.3,
+  "imbalance_factor": 0.3,
+  "artifact_level": 0.4,
+  "artifact_type": "blur",
+  "seed": 42,
+  "exp_name": "voc_noisy_noise0.3_yolov8n"
+}

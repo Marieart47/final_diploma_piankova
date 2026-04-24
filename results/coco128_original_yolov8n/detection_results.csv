@@ -1,0 +1,2 @@
+experiment,model,strategy,dataset_type,map50,map50_95,val_box_loss,val_cls_loss,total_steps,total_epochs,training_time_sec
+coco128_original_yolov8n,yolov8n,baseline,original,0.6670072149203385,0.498932303533152,0.0,0.0,64,3,204.5

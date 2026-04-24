@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,imbalance_factor,noise_level,artifact_level,test_accuracy,test_loss,best_val_accuracy,best_epoch,total_steps,total_epochs,total_training_time
+stl10_artifacts_blur_art0.4,swin_t,baseline,artifacts,0.5,0.3,0.4,0.9685,0.10618848882615567,0.978,7,828,23,9564.117724180222
+stl10_artifacts_blur_art0.4,swin_t,stagewise,artifacts,0.5,0.3,0.4,0.958625,0.13877552944421767,0.958,4,220,20,2659.555403470993
+stl10_artifacts_blur_art0.4,swin_t,static,artifacts,0.5,0.3,0.4,0.959375,0.12939742663502693,0.966,3,264,19,2796.5717606544495
+stl10_artifacts_blur_art0.4,swin_t,online,artifacts,0.5,0.3,0.4,0.944875,0.19109154880046844,0.95,6,242,22,2994.3250210285187

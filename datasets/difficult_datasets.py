@@ -1,269 +1,303 @@
-import torch
-from torch.utils.data import Dataset
-from torchvision import transforms
-import numpy as np
-from PIL import Image, ImageFilter
 import random
 from collections import Counter
 
+import numpy as np
+import torch
+from PIL import Image, ImageFilter
+from torch.utils.data import Dataset
+from torchvision import transforms
+
+from datasets.curriculum_dataset import CurriculumDataset
+
+
 class ClassImbalanceDataset(Dataset):
-    """Датасет с дисбалансом классов"""
+    """Датасет с искусственным дисбалансом классов: редкие классы прореживаются."""
+
     def __init__(self, base_dataset, imbalance_factor=0.5, rare_classes=None):
         self.base = base_dataset
         self.losses = torch.zeros(len(base_dataset))
         self.imbalance_factor = imbalance_factor
         self.rare_classes = rare_classes if rare_classes is not None else [0, 1, 2]
-        self.indices = self._create_imbalance()
-        
+
         print(f"\n[Class Imbalance Dataset]")
-        print(f"  Total original samples: {len(base_dataset)}")
-        print(f"  Total after imbalance: {len(self.indices)}")
+        print(f"  Original dataset size: {len(base_dataset)}")
         print(f"  Imbalance factor: {imbalance_factor}")
         print(f"  Rare classes: {self.rare_classes}")
-    
+
+        self._collect_class_stats()
+        self.indices = self._create_imbalance()
+
+        print(f"  Final dataset size: {len(self.indices)}")
+        print(f"  Samples removed: {len(base_dataset) - len(self.indices)}")
+
+    def _collect_class_stats(self):
+        class_counts = Counter()
+        sample_size = min(1000, len(self.base))
+
+        for i in range(sample_size):
+            try:
+                item = self.base[i]
+                label = item[1] if len(item) >= 2 else None
+                if label is not None:
+                    class_counts[label] += 1
+            except Exception:
+                continue
+
+        print(f"  Original class distribution (first {sample_size} samples):")
+        for class_id in range(10):
+            count = class_counts.get(class_id, 0)
+            percentage = (count / sample_size) * 100
+            status = "RARE" if class_id in self.rare_classes else "COMMON"
+            print(f"    Class {class_id}: {count} samples ({percentage:.1f}%) [{status}]")
+
     def _create_imbalance(self):
-        class_indices = {i: [] for i in range(10)}
-        
+        all_samples = []
         for idx in range(len(self.base)):
-            data = self.base[idx]
-            if isinstance(data, tuple):
-                if len(data) >= 2:
-                    _, label = data[:2]
-                else:
-                    label = -1
-            else:
+            try:
+                item = self.base[idx]
+                label = item[1] if len(item) >= 2 else -1
+            except Exception:
                 label = -1
-            
-            class_indices[label].append(idx)
-        
+            all_samples.append((idx, label))
+
+        # Group indices by class
+        class_indices = {i: [] for i in range(10)}
+        for idx, label in all_samples:
+            if 0 <= label <= 9:
+                class_indices[label].append(idx)
+
         kept_indices = []
         for class_idx in range(10):
             indices = class_indices[class_idx]
             if class_idx in self.rare_classes:
+                # Keep only (1 - imbalance_factor) of rare class samples
                 keep_count = max(1, int(len(indices) * (1 - self.imbalance_factor)))
-                kept_indices.extend(random.sample(indices, keep_count))
+                selected = random.sample(indices, keep_count) if indices else []
+                kept_indices.extend(selected)
+                print(f"  Class {class_idx} (rare): {len(selected)}/{len(indices)} "
+                      f"samples kept ({len(selected)/len(indices)*100:.0f}%)")
             else:
                 kept_indices.extend(indices)
-        
-        # Сортируем для воспроизводимости
-        kept_indices.sort()
+                print(f"  Class {class_idx} (common): {len(indices)}/{len(indices)} "
+                      f"samples kept (100%)")
+
+        random.shuffle(kept_indices)
         return kept_indices
-    
+
     def __len__(self):
         return len(self.indices)
-    
+
     def __getitem__(self, idx):
+        # Map dataset-local idx → original base index
         real_idx = self.indices[idx]
-        data = self.base[real_idx]
-        
-        if isinstance(data, tuple):
-            if len(data) == 2:
-                image, label = data
-                return image, label, idx
-            elif len(data) == 3:
-                image, label, _ = data
-                return image, label, idx
-        
-        return data, 0, idx
-    
+        try:
+            data = self.base[real_idx]
+            image = data[0]
+            label = data[1]
+            return image, label, idx
+        except Exception:
+            return torch.zeros((3, 32, 32)), 0, idx
+
     def update_losses(self, idxs, losses):
-        """
-        idxs - индексы из датасета (0..len(self.indices)-1)
-        """
+        """Store per-sample losses using base-dataset indices."""
         if isinstance(idxs, torch.Tensor):
             idxs = idxs.tolist()
-        
         for ds_idx, loss in zip(idxs, losses):
             if ds_idx < len(self.indices):
                 real_idx = self.indices[ds_idx]
                 self.losses[real_idx] = loss
-    
+
     def ranked_indices(self):
-        """
-        Возвращает индексы ДАТАСЕТА (0..len(self.indices)-1), отсортированные по потерям
-        """
-        # Создаем список пар (индекс датасета, потеря реального индекса)
-        ds_loss_pairs = []
-        for ds_idx, real_idx in enumerate(self.indices):
-            ds_loss_pairs.append((ds_idx, self.losses[real_idx].item()))
-        
-        # Сортируем по потерям (от меньших к большим)
+        """Returns dataset-local indices sorted from easiest (lowest loss) to hardest."""
+        ds_loss_pairs = [
+            (ds_idx, self.losses[real_idx].item())
+            for ds_idx, real_idx in enumerate(self.indices)
+        ]
         ds_loss_pairs.sort(key=lambda x: x[1])
-        
-        # Возвращаем только индексы датасета
         return torch.tensor([ds_idx for ds_idx, _ in ds_loss_pairs])
 
 
 class NoisyLabelDataset(Dataset):
-    """Датасет с шумными метками"""
-    def __init__(self, base_dataset, noise_level=0.3, noise_type='random'):
+    """Датасет с зашумлёнными метками: каждая метка случайно заменяется с вероятностью noise_level."""
+
+    def __init__(self, base_dataset, noise_level=0.3):
         self.base = base_dataset
         self.losses = torch.zeros(len(base_dataset))
         self.noise_level = noise_level
-        self.noise_type = noise_type
-        self.noisy_labels = self._create_noisy_labels()
-        
+
         print(f"\n[Noisy Label Dataset]")
         print(f"  Noise level: {noise_level}")
-        print(f"  Noise type: {noise_type}")
-    
+
+        self.noisy_labels = self._create_noisy_labels()
+        self._print_noise_stats()
+
     def _create_noisy_labels(self):
         noisy_labels = {}
         for idx in range(len(self.base)):
-            data = self.base[idx]
-            if isinstance(data, tuple) and len(data) >= 2:
-                _, original_label = data[:2]
-            else:
+            try:
+                item = self.base[idx]
+                original_label = item[1] if len(item) >= 2 else 0
+            except Exception:
                 original_label = 0
-            
+
             if random.random() < self.noise_level:
-                if self.noise_type == 'random':
-                    noisy_labels[idx] = random.choice([i for i in range(10) if i != original_label])
-                elif self.noise_type == 'flip':
-                    noisy_labels[idx] = 9 - original_label
-                elif self.noise_type == 'pair_flip':
-                    pair_map = {0: 1, 1: 0, 2: 3, 3: 2, 4: 5, 5: 4, 
-                               6: 7, 7: 6, 8: 9, 9: 8}
-                    noisy_labels[idx] = pair_map.get(original_label, original_label)
+                # Replace with a uniformly random label from the other 9 classes
+                possible = [i for i in range(10) if i != original_label]
+                noisy_labels[idx] = random.choice(possible) if possible else original_label
             else:
                 noisy_labels[idx] = original_label
+
         return noisy_labels
-    
+
+    def _print_noise_stats(self):
+        correct = 0
+        sample_size = min(1000, len(self.base))
+
+        for idx in range(sample_size):
+            try:
+                item = self.base[idx]
+                original_label = item[1] if len(item) >= 2 else None
+                if original_label is not None and self.noisy_labels.get(idx, original_label) == original_label:
+                    correct += 1
+            except Exception:
+                continue
+
+        accuracy = (correct / sample_size) * 100
+        print(f"  Label accuracy in sample: {accuracy:.1f}%")
+        print(f"  Estimated noisy samples: {sample_size - correct}")
+
     def __len__(self):
         return len(self.base)
-    
+
     def __getitem__(self, idx):
-        data = self.base[idx]
-        if isinstance(data, tuple):
-            if len(data) == 2:
-                image, original_label = data
-            elif len(data) == 3:
-                image, original_label, _ = data
-            else:
-                image, original_label = data[0], 0
-        else:
-            image, original_label = data, 0
-        
-        # Используем оригинальный idx для доступа к noisy_labels
+        try:
+            item = self.base[idx]
+            image = item[0]
+            original_label = item[1] if len(item) >= 2 else 0
+        except Exception:
+            image, original_label = torch.zeros((3, 32, 32)), 0
+
         noisy_label = self.noisy_labels.get(idx, original_label)
         return image, noisy_label, idx
-    
+
     def update_losses(self, idxs, losses):
         if isinstance(idxs, torch.Tensor):
             idxs = idxs.tolist()
-        
         for idx, loss in zip(idxs, losses):
             self.losses[idx] = loss
-    
+
     def ranked_indices(self):
-        """
-        Возвращает индексы (0..len(self)-1), отсортированные по потерям
-        """
+        """Returns indices sorted from easiest (lowest loss) to hardest."""
         return torch.argsort(self.losses)
 
 
 class VisualArtifactsDataset(Dataset):
-    """Датасет с визуальными артефактами"""
+    """Датасет с визуальными артефактами: blur / noise / low_res / mixed.
+
+    Артефакт применяется один раз и кэшируется для воспроизводимости.
+    """
+
     def __init__(self, base_dataset, artifact_level=0.5, artifact_type='mixed'):
         self.base = base_dataset
         self.losses = torch.zeros(len(base_dataset))
         self.artifact_level = artifact_level
         self.artifact_type = artifact_type
         self.artifact_cache = {}
-        
+
         print(f"\n[Visual Artifacts Dataset]")
         print(f"  Artifact level: {artifact_level}")
         print(f"  Artifact type: {artifact_type}")
-    
+
     def __len__(self):
         return len(self.base)
-    
+
     def __getitem__(self, idx):
+        # Return cached result to ensure reproducible artifacts across epochs
         if idx in self.artifact_cache:
             return self.artifact_cache[idx]
-        
-        data = self.base[idx]
-        if isinstance(data, tuple):
-            if len(data) == 2:
-                image, label = data
-            elif len(data) == 3:
-                image, label, _ = data
-            else:
-                image, label = data[0], 0
-        else:
-            image, label = data, 0
-        
+
+        try:
+            item = self.base[idx]
+            image = item[0]
+            label = item[1] if len(item) >= 2 else 0
+        except Exception:
+            image, label = torch.zeros((3, 32, 32)), 0
+
         if self.artifact_level > 0:
             image = self._apply_artifact(image)
-        
-        self.artifact_cache[idx] = (image, label, idx)
-        return image, label, idx
-    
+
+        result = (image, label, idx)
+        self.artifact_cache[idx] = result
+        return result
+
     def _apply_artifact(self, image):
+        """Applies a single artifact to the image and returns a tensor."""
         if isinstance(image, torch.Tensor):
             pil_image = transforms.ToPILImage()(image)
         else:
             pil_image = image
-        
-        if self.artifact_type == 'mixed':
-            artifact_type = random.choice(['blur', 'noise', 'low_res'])
-        else:
-            artifact_type = self.artifact_type
-        
+
+        artifact_type = (
+            random.choice(['blur', 'noise', 'low_res'])
+            if self.artifact_type == 'mixed'
+            else self.artifact_type
+        )
+
         if artifact_type == 'blur':
+            # Gaussian blur radius: 1 (artifact_level=0) → 5 (artifact_level=1)
             blur_radius = 1 + self.artifact_level * 4
             pil_image = pil_image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-        
+
         elif artifact_type == 'noise':
+            # Additive Gaussian noise, std: 0 → 50
             img_array = np.array(pil_image).astype(np.float32)
             noise_std = self.artifact_level * 50
             noise = np.random.normal(0, noise_std, img_array.shape)
             img_array = np.clip(img_array + noise, 0, 255)
             pil_image = Image.fromarray(img_array.astype(np.uint8))
-        
+
         elif artifact_type == 'low_res':
+            # Downscale to (scale × original size) then upscale back with nearest-neighbor
             scale = max(0.1, 1 - self.artifact_level * 0.9)
             small_w = int(pil_image.width * scale)
             small_h = int(pil_image.height * scale)
             small_image = pil_image.resize((small_w, small_h), Image.BILINEAR)
             pil_image = small_image.resize((pil_image.width, pil_image.height), Image.NEAREST)
-        
+
         return transforms.ToTensor()(pil_image)
-    
+
     def update_losses(self, idxs, losses):
         if isinstance(idxs, torch.Tensor):
             idxs = idxs.tolist()
-        
         for idx, loss in zip(idxs, losses):
             self.losses[idx] = loss
-    
+
     def ranked_indices(self):
+        """Returns indices sorted from easiest (lowest loss) to hardest."""
         return torch.argsort(self.losses)
 
 
-# Фабрика для создания датасетов
 def create_dataset(base_dataset, dataset_type='original', **kwargs):
-    """
-    Создает датасет с заданными сложностями
-    """
+    print(f"  Creating {dataset_type} dataset with parameters: {kwargs}")
+
     if dataset_type == 'original':
-        from datasets.curriculum_dataset import CurriculumDataset
         return CurriculumDataset(base_dataset)
-    
     elif dataset_type == 'imbalance':
-        imbalance_factor = kwargs.get('imbalance_factor', 0.5)
-        rare_classes = kwargs.get('rare_classes', [0, 1, 2])
-        return ClassImbalanceDataset(base_dataset, imbalance_factor, rare_classes)
-    
+        return ClassImbalanceDataset(
+            base_dataset,
+            imbalance_factor=kwargs.get('imbalance_factor', 0.5),
+            rare_classes=kwargs.get('rare_classes', [0, 1, 2]),
+        )
     elif dataset_type == 'noisy':
-        noise_level = kwargs.get('noise_level', 0.3)
-        noise_type = kwargs.get('noise_type', 'random')
-        return NoisyLabelDataset(base_dataset, noise_level, noise_type)
-    
+        return NoisyLabelDataset(
+            base_dataset,
+            noise_level=kwargs.get('noise_level', 0.3),
+        )
     elif dataset_type == 'artifacts':
-        artifact_level = kwargs.get('artifact_level', 0.5)
-        artifact_type = kwargs.get('artifact_type', 'mixed')
-        return VisualArtifactsDataset(base_dataset, artifact_level, artifact_type)
-    
+        return VisualArtifactsDataset(
+            base_dataset,
+            artifact_level=kwargs.get('artifact_level', 0.5),
+            artifact_type=kwargs.get('artifact_type', 'mixed'),
+        )
     else:
         raise ValueError(f"Unknown dataset type: {dataset_type}")

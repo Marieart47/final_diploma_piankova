@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,val_box_loss,val_cls_loss,total_steps,total_epochs,training_time_sec
+voc_noisy_noise0.3_yolov8n,yolov8n,baseline,noisy,0.542168307425655,0.34550206850645226,0.0,0.0,4138,1,6566.9
+voc_noisy_noise0.3_yolov8n,yolov8n,stagewise,noisy,0.4257705704641789,0.26270949258798687,0.0,0.0,3312,4,13209.8
+voc_noisy_noise0.3_yolov8n,yolov8n,static,noisy,0.5265922791936892,0.3410638515318158,0.0,0.0,3449,2,29889.1
+voc_noisy_noise0.3_yolov8n,yolov8n,online,noisy,0.4737209113582622,0.29195276081322,0.0,0.0,3105,4,76910.5

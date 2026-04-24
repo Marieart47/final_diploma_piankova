@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,total_steps,total_epochs,training_time_sec
+voc_artifacts_noise_art0.4_yolov8n,yolov8n,baseline,artifacts,4.646155506744347e-06,9.625773781980992e-07,4138,1,9147.7
+voc_artifacts_noise_art0.4_yolov8n,yolov8n,stagewise,artifacts,0.0001987640409297567,4.709360658482235e-05,3312,4,87015.4
+voc_artifacts_noise_art0.4_yolov8n,yolov8n,static,artifacts,0.0002623066897009894,4.924648638843443e-05,3449,2,330833.4
+voc_artifacts_noise_art0.4_yolov8n,yolov8n,online,artifacts,0.0012187357565811169,0.0004054506061759523,3105,4,480911.6

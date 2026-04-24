@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,val_box_loss,val_cls_loss,total_steps,total_epochs,training_time_sec
+voc_imbalance_im0.3_yolov8n,yolov8n,baseline,imbalance,0.4821175920306843,0.28711838164030856,0.0,0.0,3874,1,61300.8
+voc_imbalance_im0.3_yolov8n,yolov8n,stagewise,imbalance,0.4752075272565242,0.3311354050526474,0.0,0.0,3104,4,29817.7
+voc_imbalance_im0.3_yolov8n,yolov8n,static,imbalance,0.561465400611217,0.36201679192601843,0.0,0.0,3234,2,132736.1
+voc_imbalance_im0.3_yolov8n,yolov8n,online,imbalance,0.4858335986343699,0.339163771258034,0.0,0.0,3492,5,246506.4

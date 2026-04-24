@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,val_box_loss,val_cls_loss,total_steps,total_epochs,training_time_sec
+voc_artifacts_blur_art0.4_yolov8n,yolov8n,baseline,artifacts,3.221707822507543e-05,3.6358799393442973e-06,0.0,0.0,4138,1,8198.4
+voc_artifacts_blur_art0.4_yolov8n,yolov8n,stagewise,artifacts,0.004369456246396818,0.0009223860388193446,0.0,0.0,3312,4,57555.1
+voc_artifacts_blur_art0.4_yolov8n,yolov8n,static,artifacts,7.460215969442087e-06,2.1905593558802327e-06,0.0,0.0,3449,2,287452.9
+voc_artifacts_blur_art0.4_yolov8n,yolov8n,online,artifacts,0.00028566597381446954,7.584670172239791e-05,0.0,0.0,3105,4,520073.3

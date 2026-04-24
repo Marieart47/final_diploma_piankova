@@ -1,8 +1,10 @@
 import torch
 
+
 def accuracy(preds, targets):
     preds = torch.argmax(preds, dim=1)
     return (preds == targets).float().mean().item()
+
 
 def iou(preds, targets, num_classes):
     preds = torch.argmax(preds, dim=1)
@@ -17,4 +19,5 @@ def iou(preds, targets, num_classes):
             ious.append(1.0)
         else:
             ious.append(inter / union)
+
     return sum(ious) / len(ious)

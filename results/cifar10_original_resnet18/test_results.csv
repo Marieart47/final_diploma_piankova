@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,imbalance_factor,noise_level,artifact_level,test_accuracy,test_loss,best_val_accuracy,best_epoch,total_steps,total_epochs,total_training_time
+cifar10_original_resnet18,resnet18,baseline,original,0.5,0.3,0.5,0.9303,0.2974572145462036,0.9344,8,3168,9,801.8032131195068
+cifar10_original_resnet18,resnet18,stagewise,original,0.5,0.3,0.5,0.9351,0.2661683431148529,0.942,23,3001,26,827.9947817325592
+cifar10_original_resnet18,resnet18,static,original,0.5,0.3,0.5,0.9363,0.24058061542510986,0.9438,19,3066,23,738.0483937263489
+cifar10_original_resnet18,resnet18,online,original,0.5,0.3,0.5,0.9186,0.2471928183078766,0.9284,9,2650,25,730.715484380722

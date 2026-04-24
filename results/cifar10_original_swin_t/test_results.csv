@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,imbalance_factor,noise_level,artifact_level,test_accuracy,test_loss,best_val_accuracy,best_epoch,total_steps,total_epochs,total_training_time
+cifar10_original_swin_t,swin_t,baseline,original,0.5,0.3,0.5,0.9561,0.18660016679763794,0.9594,8,3168,9,4476.794396400452
+cifar10_original_swin_t,swin_t,stagewise,original,0.5,0.3,0.5,0.9562,0.16666338238194583,0.9596,23,3001,26,6448.679898262024
+cifar10_original_swin_t,swin_t,static,original,0.5,0.3,0.5,0.9573,0.13655504283308983,0.9608,15,3066,23,3653.705670595169
+cifar10_original_swin_t,swin_t,online,original,0.5,0.3,0.5,0.9401,0.19149560561180115,0.941,3,2014,19,2751.1504361629486
