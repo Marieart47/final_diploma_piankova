@@ -26,7 +26,6 @@
 | `stagewise` | Последовательное обучение на окнах сложности: лёгкие → средние → сложные |
 | `static` | Группы фиксируются после warm-up прохода, затем циклически используются |
 | `online` | На каждой эпохе выбирается 30% наилегчайших образцов по текущему лоссу |
-| `anticurriculum` | Обратный порядок: сначала самые сложные образцы (абляция) |
 
 ## Структура проекта
 
@@ -96,7 +95,7 @@ python run_detection.py \
     --total_steps 3000 \
     --batch 8
 
-# Зашумлённые аннотации
+# Зашумлённые датасеты
 python run_detection.py \
     --data VOC.yaml \
     --dataset_type noisy \
@@ -119,16 +118,16 @@ python plots/visualize_detection_results.py
 
 | Аргумент | По умолчанию | Описание |
 |----------|-------------|----------|
-| `--dataset` | `cifar10` | `cifar10`, `stl10`, `cifar100` |
-| `--dataset_type` | `original` | `original`, `noisy`, `imbalance`, `artifacts` |
-| `--models` | `resnet18` | Через запятую: `resnet18,swin_t` |
-| `--strategies` | `baseline,stagewise,static,online` | Через запятую |
+| `--dataset` | `cifar10` | `cifar10`, `stl10`, `cifar100` - датасет|
+| `--dataset_type` | `original` | `original`, `noisy`, `imbalance`, `artifacts` - тип качества датасета |
+| `--models` | `resnet18` | Модель |
+| `--strategies` | `baseline,stagewise,static,online` | Стратегия обучения |
 | `--budget_mode` | `steps` | `steps` — равное число шагов, `epochs` — равное число эпох |
 | `--total_steps` | `5000` | Число градиентных шагов (при `budget_mode=steps`) |
 | `--noise_level` | `0.3` | Вероятность замены метки |
 | `--imbalance_factor` | `0.5` | Доля удаляемых образцов редких классов |
 | `--artifact_level` | `0.5` | Интенсивность артефакта [0, 1] |
-| `--artifact_type` | `mixed` | `blur`, `noise`, `low_res`, `mixed` |
+| `--artifact_type` | `mixed` | `blur`, `noise`, `low_res`, `mixed` - тип артефакта |
 | `--patience` | `15` | Ранняя остановка (число эпох без улучшения) |
 
 ## Аргументы run_detection.py
