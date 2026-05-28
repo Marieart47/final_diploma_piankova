@@ -1,21 +1,18 @@
-# Автогенерируемые папки
+# Auto-generated
 __pycache__/
 venv/
 *.pyc
-
-# Чекпоинты
-checkpoints/
-training_logs/
-experiment_logs/
-
-# Системные файлы
+*.pyo
 .DS_Store
 Thumbs.db
 
-# VS Code
-.vscode/
-*.code-workspace
+# Checkpoints and training artifacts
+checkpoints/
+training_logs/
+experiment_logs/
+all_experiments_plots/
 
+# Data
 data/
 *.tar.gz
 *.zip
@@ -23,9 +20,15 @@ data/
 *.hdf5
 *.npy
 *.npz
-# Веса моделей
+
+# Model weights
 *.pt
 *.pth
 
-# Логи обучения
+# Logs
 *.log
+
+# IDE
+.vscode/
+*.code-workspace
+.claude/
