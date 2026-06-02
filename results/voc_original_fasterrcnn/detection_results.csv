@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,total_steps,total_epochs,training_time_sec
+voc_original_fasterrcnn,fasterrcnn_mobilenet_v3,baseline,original,0.14300981163978577,0.14300981163978577,3000,1,9846.7
+voc_original_fasterrcnn,fasterrcnn_mobilenet_v3,stagewise,original,0.1154957041144371,0.1154957041144371,3000,3,10992.2
+voc_original_fasterrcnn,fasterrcnn_mobilenet_v3,static,original,0.11966685950756073,0.11966685950756073,3000,1,10006.1
+voc_original_fasterrcnn,fasterrcnn_mobilenet_v3,online,original,0.10360728204250336,0.10360728204250336,3000,3,10917.6

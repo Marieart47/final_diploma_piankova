@@ -1,0 +1,16 @@
+{
+  "dataset_type": "imbalance",
+  "strategies": "baseline,stagewise,static,online",
+  "total_steps": 3000,
+  "batch": 4,
+  "lr": 0.0001,
+  "imgsz": 640,
+  "workers": 0,
+  "device": "cpu",
+  "noise_level": 0.3,
+  "imbalance_factor": 0.3,
+  "artifact_level": 0.4,
+  "artifact_type": "blur",
+  "seed": 42,
+  "exp_name": "voc_imbalance_im0.3_fasterrcnn"
+}

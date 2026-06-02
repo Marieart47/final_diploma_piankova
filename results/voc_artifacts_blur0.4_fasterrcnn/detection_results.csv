@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,total_steps,total_epochs,training_time_sec
+voc_artifacts_blur0.4_fasterrcnn,fasterrcnn_mobilenet_v3,baseline,artifacts,0.025457272306084633,0.025457272306084633,3000,1,11443.4
+voc_artifacts_blur0.4_fasterrcnn,fasterrcnn_mobilenet_v3,stagewise,artifacts,0.03845909610390663,0.03845909610390663,3000,3,12387.5
+voc_artifacts_blur0.4_fasterrcnn,fasterrcnn_mobilenet_v3,static,artifacts,0.021383149549365044,0.021383149549365044,3000,1,11266.1
+voc_artifacts_blur0.4_fasterrcnn,fasterrcnn_mobilenet_v3,online,artifacts,0.018618926405906677,0.018618926405906677,3000,3,12447.2

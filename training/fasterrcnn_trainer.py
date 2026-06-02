@@ -3,6 +3,7 @@
 import time
 from typing import List, Dict
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
@@ -26,76 +27,76 @@ def build_fasterrcnn(num_classes=21, pretrained_backbone=True):
 
 # ── mAP@50 ────────────────────────────────────────────────────────────────────
 
-def _compute_map50(preds: List[Dict], targets: List[Dict], num_classes: int = 20) -> float:
-    """
-    Вычисляет mAP@IoU=0.50 по всем классам.
-    preds:   список dict {'boxes':(N,4), 'labels':(N,), 'scores':(N,)}
-    targets: список dict {'boxes':(M,4), 'labels':(M,)}
-    Классы 1-индексированные (0=фон).
-    """
+def _compute_ap_at_iou(preds: List[Dict], targets: List[Dict],
+                       iou_threshold: float, num_classes: int = 20) -> float:
+    """AP при фиксированном IoU threshold, 11-point interpolation (VOC)."""
     ap_list = []
-
     for cls in range(1, num_classes + 1):
         all_scores, all_tp, all_fp = [], [], []
         n_gt = 0
 
         for pred, tgt in zip(preds, targets):
-            # GT для этого класса
-            gt_mask = tgt['labels'] == cls
+            gt_mask  = tgt['labels'] == cls
             gt_boxes = tgt['boxes'][gt_mask]
-            n_gt += len(gt_boxes)
-            matched = torch.zeros(len(gt_boxes), dtype=torch.bool)
+            n_gt    += len(gt_boxes)
+            matched  = torch.zeros(len(gt_boxes), dtype=torch.bool)
 
-            # Предсказания для этого класса
-            pd_mask = pred['labels'] == cls
+            pd_mask   = pred['labels'] == cls
             pd_boxes  = pred['boxes'][pd_mask]
             pd_scores = pred['scores'][pd_mask]
-
             if len(pd_boxes) == 0:
                 continue
 
-            # Сортировка по убыванию уверенности
-            order = torch.argsort(pd_scores, descending=True)
+            order     = torch.argsort(pd_scores, descending=True)
             pd_boxes  = pd_boxes[order]
             pd_scores = pd_scores[order]
 
-            for b, s in zip(pd_boxes, pd_scores):
-                all_scores.append(s.item())
+            for b in pd_boxes:
                 if len(gt_boxes) == 0:
                     all_tp.append(0); all_fp.append(1)
                     continue
                 ious = box_iou(b.unsqueeze(0), gt_boxes)[0]
                 best_iou, best_j = ious.max(0)
-                if best_iou >= 0.5 and not matched[best_j]:
+                if best_iou >= iou_threshold and not matched[best_j]:
                     matched[best_j] = True
                     all_tp.append(1); all_fp.append(0)
                 else:
                     all_tp.append(0); all_fp.append(1)
+                all_scores.append(pd_scores[len(all_tp) - 1].item()
+                                  if len(all_scores) < len(pd_scores) else 0.0)
 
         if n_gt == 0:
             continue
-
         if not all_scores:
             ap_list.append(0.0)
             continue
 
-        order = sorted(range(len(all_scores)), key=lambda i: -all_scores[i])
-        tp = torch.tensor([all_tp[i] for i in order], dtype=torch.float32)
-        fp = torch.tensor([all_fp[i] for i in order], dtype=torch.float32)
+        order  = sorted(range(len(all_scores)), key=lambda i: -all_scores[i])
+        tp     = torch.tensor([all_tp[i] for i in order], dtype=torch.float32)
+        fp     = torch.tensor([all_fp[i] for i in order], dtype=torch.float32)
         tp_cum = tp.cumsum(0)
         fp_cum = fp.cumsum(0)
+        rec    = tp_cum / n_gt
+        prec   = tp_cum / (tp_cum + fp_cum + 1e-9)
 
-        rec  = tp_cum / n_gt
-        prec = tp_cum / (tp_cum + fp_cum + 1e-9)
-
-        # 11-point interpolation (VOC)
         ap = 0.0
         for t in torch.linspace(0, 1, 11):
             mask = rec >= t
-            ap += (prec[mask].max().item() if mask.any() else 0.0)
+            ap  += prec[mask].max().item() if mask.any() else 0.0
         ap_list.append(ap / 11)
 
     return float(torch.tensor(ap_list).mean()) if ap_list else 0.0
+
+
+def _compute_map50(preds: List[Dict], targets: List[Dict], num_classes: int = 20) -> float:
+    return _compute_ap_at_iou(preds, targets, iou_threshold=0.5, num_classes=num_classes)
+
+
+def _compute_map5095(preds: List[Dict], targets: List[Dict], num_classes: int = 20) -> float:
+    """mAP@[0.50:0.05:0.95] — среднее по 10 IoU порогам."""
+    thresholds = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+    return float(np.mean([_compute_ap_at_iou(preds, targets, t, num_classes)
+                          for t in thresholds]))
 
 
 # ── Trainer ────────────────────────────────────────────────────────────────────

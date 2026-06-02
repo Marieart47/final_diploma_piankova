@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,total_steps,total_epochs,training_time_sec
+voc_noisy_noise0.6_fasterrcnn,fasterrcnn_mobilenet_v3,baseline,noisy,0.04061772674322128,0.04061772674322128,3000,1,11259.9
+voc_noisy_noise0.6_fasterrcnn,fasterrcnn_mobilenet_v3,stagewise,noisy,0.03005063906311989,0.03005063906311989,3000,3,12429.1
+voc_noisy_noise0.6_fasterrcnn,fasterrcnn_mobilenet_v3,static,noisy,0.04593022167682648,0.04593022167682648,3000,1,11312.3
+voc_noisy_noise0.6_fasterrcnn,fasterrcnn_mobilenet_v3,online,noisy,0.04307887703180313,0.04307887703180313,3000,3,12432.3

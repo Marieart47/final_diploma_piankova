@@ -1,0 +1,5 @@
+experiment,model,strategy,dataset_type,map50,map50_95,total_steps,total_epochs,training_time_sec
+voc_imbalance_im0.3_fasterrcnn,fasterrcnn_mobilenet_v3,baseline,imbalance,0.1339012086391449,0.1339012086391449,3000,1,11013.3
+voc_imbalance_im0.3_fasterrcnn,fasterrcnn_mobilenet_v3,stagewise,imbalance,0.08781880140304565,0.08781880140304565,3000,3,12033.4
+voc_imbalance_im0.3_fasterrcnn,fasterrcnn_mobilenet_v3,static,imbalance,0.10629911720752716,0.10629911720752716,3000,1,10911.5
+voc_imbalance_im0.3_fasterrcnn,fasterrcnn_mobilenet_v3,online,imbalance,0.1245008111000061,0.1245008111000061,3000,3,12078.9
